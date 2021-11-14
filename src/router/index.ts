@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import Home from '../views/Home.vue';
+import VdsCore from '../views/VdsCore.vue';
 
 const routes: Array<RouteRecordRaw> = [
     {
         path: '/',
-        name: 'Home',
-        component: Home
+        name: 'VdsCore',
+        component: VdsCore
     },
     {
         path: '/about',

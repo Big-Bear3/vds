@@ -4,10 +4,6 @@ export function isCollectionObject(obj: any): boolean {
     return obj instanceof Map || obj instanceof Set || obj instanceof WeakMap || obj instanceof WeakSet;
 }
 
-export function objectCanSensitise(rawObj: any): boolean {
-    return typeof rawObj === 'object' && rawObj !== null;
-}
-
 export function isDebugMode(): boolean {
     return true;
     // return window.lucid.debugMode;

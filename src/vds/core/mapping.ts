@@ -25,13 +25,13 @@ export function putRawAndSensitiveObjects(rawObj: any, sensitiveObj: any): void 
 }
 
 export function setRootHolderAndPosition(rawObj: any, rawObjHolder: any, rawObjKey: string | symbol) {
-    const holderObjectInfo = rawToRawObjectInfo.get(rawObjHolder);
-    let targetRawObjectInfo: RawObjectInfo;
-
     let currentPosition: string | symbol | number = rawObjKey;
     if (Array.isArray(rawObjHolder)) {
         currentPosition = Number.parseInt(<string>currentPosition);
     }
+
+    const holderObjectInfo = rawToRawObjectInfo.get(rawObjHolder);
+    let targetRawObjectInfo: RawObjectInfo;
 
     if (holderObjectInfo) {
         targetRawObjectInfo = {
@@ -44,6 +44,7 @@ export function setRootHolderAndPosition(rawObj: any, rawObjHolder: any, rawObjK
             position: [currentPosition]
         };
     }
+
     const rawObjectInfo = rawToRawObjectInfo.get(rawObj);
     if (rawObjectInfo) {
         rawObjectInfo.rootHolder = targetRawObjectInfo.rootHolder;
@@ -53,6 +54,10 @@ export function setRootHolderAndPosition(rawObj: any, rawObjHolder: any, rawObjK
 
         if (isDebugMode()) attachDebugInfoToObject(rawObj, VdsKeys.RawObjectInfo, targetRawObjectInfo);
     }
+}
+
+export function getRootHolder(rawObj: any): any {
+    return rawToRawObjectInfo.get(rawObj)?.rootHolder;
 }
 
 export function addAgents(sensitiveObj: any, agents: Set<any>) {
@@ -66,10 +71,6 @@ export function addAgents(sensitiveObj: any, agents: Set<any>) {
     } else {
         rawObjectInfo.agents = agents;
     }
-}
-
-export function getRootHolder(rawObj: any): any {
-    return rawToRawObjectInfo.get(rawObj)?.rootHolder;
 }
 
 export function getAgents(rawObj: any): Set<any> {

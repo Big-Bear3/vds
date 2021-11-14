@@ -1,6 +1,6 @@
 import { getSensitiveObject, putRawAndSensitiveObjects, setRootHolderAndPosition } from './mapping';
 import { isWritableState } from './rw';
-import { objectCanSensitise, isCollectionObject, isVdsKey } from './utils';
+import { isCollectionObject, isVdsKey } from './utils';
 
 export const generalProxyHandler: ProxyHandler<any> = {
     defineProperty(target: any, key: string | symbol, attributes: PropertyDescriptor): boolean {
@@ -26,17 +26,18 @@ export const generalProxyHandler: ProxyHandler<any> = {
     get(target: any, key: string | symbol, receiver: any): any {
         const rawObj = Reflect.get(target, key, receiver);
 
-        if (isVdsKey(key)) return rawObj;
-
-        if (typeof rawObj === 'function') {
-            console.error('Hold()装饰器装饰的对象中的元素不能是Function类型！');
-            return rawObj;
-        }
-
         const sensitiveObjStored = getSensitiveObject(rawObj);
         if (sensitiveObjStored) return sensitiveObjStored;
 
-        if (!objectCanSensitise(rawObj)) return rawObj;
+        if (isVdsKey(key)) return rawObj;
+
+        const rawObjType = typeof rawObj;
+
+        if (rawObjType === 'function') {
+            return rawObj;
+        }
+
+        if (rawObjType !== 'object' || rawObj === null) return rawObj;
 
         return createSensitiveObject(rawObj, target, key);
     }

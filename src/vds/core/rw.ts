@@ -1,5 +1,5 @@
 import { VdsKeys } from './constants';
-import { getRootHolder } from './mapping';
+import { getAgents, getRootHolder } from './mapping';
 import { attachDebugInfoToObject, isDebugMode } from './utils';
 
 interface RootHolderAttachedInfo {
@@ -10,14 +10,24 @@ const rootHolderAttachedInfoMap = new WeakMap<any, RootHolderAttachedInfo>();
 
 export function isWritableState(holder: any, showError = true): boolean {
     const rootHolder = getRootHolder(holder);
-    const holderWritable = rootHolderAttachedInfoMap.get(rootHolder).writable;
-    if (!holderWritable && showError)
-        console.error('禁止在没有被Rw()装饰器装饰的函数内，或非rw()函数内修改Hold()装饰器装饰的对象！');
+    const rootHolderWritable = rootHolderAttachedInfoMap.get(rootHolder).writable;
 
-    return holderWritable;
+    if (!rootHolderWritable) {
+        const agents = getAgents(holder);
+        for (const agent of agents) {
+            const agentWritable = rootHolderAttachedInfoMap.get(agent)?.writable;
+            if (agentWritable) return true;
+        }
+        if (showError) {
+            console.error('禁止在没有被Rw()装饰器装饰的函数内，或非rw()函数内修改Hold()装饰器装饰的对象！');
+        }
+        return false;
+    }
+
+    return true;
 }
 
-export function lockWriteForHolder(rootHolder: any): void {
+export function lockWriteForRootHolder(rootHolder: any): void {
     const rootHolderAttachedInfo = rootHolderAttachedInfoMap.get(rootHolder);
     if (rootHolderAttachedInfo) {
         rootHolderAttachedInfo.writable = false;
@@ -31,7 +41,7 @@ export function lockWriteForHolder(rootHolder: any): void {
     }
 }
 
-export function unlockWriteForHolder(rootHolder: any): void {
+export function unlockWriteForRootHolder(rootHolder: any): void {
     const rootHolderAttachedInfo = rootHolderAttachedInfoMap.get(rootHolder);
     if (rootHolderAttachedInfo) {
         rootHolderAttachedInfo.writable = true;
@@ -46,22 +56,22 @@ export function unlockWriteForHolder(rootHolder: any): void {
 }
 
 export function rw(holder: any, rwAble: () => void): void {
-    unlockWriteForHolder(holder);
+    unlockWriteForRootHolder(holder);
     rwAble();
-    lockWriteForHolder(holder);
+    lockWriteForRootHolder(holder);
 }
 
 export function Rw(): MethodDecorator {
     return function (_target: any, _key: string | any, descriptor: PropertyDescriptor) {
         const originFun = descriptor.value;
         descriptor.value = function (...args: any[]) {
-            unlockWriteForHolder(this);
+            unlockWriteForRootHolder(this);
             if (args === undefined) {
                 originFun.call(this);
             } else {
                 originFun.call(this, ...args);
             }
-            lockWriteForHolder(this);
+            lockWriteForRootHolder(this);
         };
     };
 }
