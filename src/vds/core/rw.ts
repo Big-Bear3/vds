@@ -9,14 +9,23 @@ interface RootHolderAttachedInfo {
 const rootHolderAttachedInfoMap = new WeakMap<any, RootHolderAttachedInfo>();
 
 export function isWritableState(holder: any, showError = true): boolean {
-    const rootHolder = getRootHolder(holder);
+    let rootHolder: any;
+    const holderIsRootHolder = isRootHolder(holder);
+    if (holderIsRootHolder) {
+        rootHolder = holder;
+    } else {
+        rootHolder = getRootHolder(holder);
+    }
+
     const rootHolderWritable = rootHolderAttachedInfoMap.get(rootHolder).writable;
 
     if (!rootHolderWritable) {
-        const agents = getAgents(holder);
-        for (const agent of agents) {
-            const agentWritable = rootHolderAttachedInfoMap.get(agent)?.writable;
-            if (agentWritable) return true;
+        if (!holderIsRootHolder) {
+            const agents = getAgents(holder);
+            for (const agent of agents) {
+                const agentWritable = rootHolderAttachedInfoMap.get(agent)?.writable;
+                if (agentWritable) return true;
+            }
         }
         if (showError) {
             console.error('禁止在没有被Rw()装饰器装饰的函数内，或非rw()函数内修改Hold()装饰器装饰的对象！');
@@ -53,6 +62,10 @@ export function unlockWriteForRootHolder(rootHolder: any): void {
 
         if (isDebugMode()) attachDebugInfoToObject(rootHolder, VdsKeys.RootHolderAttachedInfo, rootHolderAttachedInfo);
     }
+}
+
+export function isRootHolder(holder: any): boolean {
+    return !!rootHolderAttachedInfoMap.get(holder);
 }
 
 export function rw(holder: any, rwAble: () => void): void {

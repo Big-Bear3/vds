@@ -1,5 +1,5 @@
 import { reactive } from 'vue';
-import { lockWriteForRootHolder as lockWriteForRootHolder } from './rw';
+import { isWritableState, lockWriteForRootHolder as lockWriteForRootHolder } from './rw';
 import { createSensitiveObject } from './sense';
 import { isCollectionObject } from './utils';
 
@@ -13,6 +13,8 @@ export function Hold(): PropertyDecorator {
                 return _rootObj;
             },
             set(rootRawObj: any) {
+                if (_rootObj && !isWritableState(this)) return;
+
                 if (rootRawObj === undefined || rootRawObj === null) {
                     console.error('Hold()装饰器装饰的对象必须为非空的Object类型！');
                     return;

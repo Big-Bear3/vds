@@ -1,4 +1,5 @@
 import { VdsKeys } from './constants';
+import { isRootHolder } from './rw';
 import { attachDebugInfoToObject, isDebugMode } from './utils';
 
 interface RawObjectInfo {
@@ -57,6 +58,7 @@ export function setRootHolderAndPosition(rawObj: any, rawObjHolder: any, rawObjK
 }
 
 export function getRootHolder(rawObj: any): any {
+    if (isRootHolder(rawObj)) return rawObj;
     return rawToRawObjectInfo.get(rawObj)?.rootHolder;
 }
 
