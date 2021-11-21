@@ -5,13 +5,13 @@ import { attachDebugInfoToObject, isDebugMode } from './utils';
 export interface RawObjectInfo {
     rootHolder: any;
     position: (string | symbol | number)[];
-    agents?: Set<any>;
 }
 
 const rawToSensitiveObjects = new WeakMap<any, any>();
 const sensitiveToRawObjects = new WeakMap<any, any>();
 const reactiveToSensitiveObjects = new WeakMap<any, any>();
 const rawToRawObjectInfo = new WeakMap<any, RawObjectInfo>();
+const rootHolderToAgents = new WeakMap<any, any[]>();
 
 export function getSensitiveObject(rawObj: any): any {
     return rawToSensitiveObjects.get(rawObj);
@@ -81,31 +81,18 @@ export function getRootHolder(rawObj: any): any {
     return rawToRawObjectInfo.get(rawObj)?.rootHolder;
 }
 
-export function addAgents(sensitiveObj: any, agents: Set<any>) {
-    const rawObj = getRawObject(sensitiveObj);
-    const rawObjectInfo = rawToRawObjectInfo.get(rawObj);
-
-    if (rawObjectInfo.agents) {
-        for (const agent of agents) {
-            rawObjectInfo.agents.add(agent);
-        }
+export function addAgent(rootHolder: any, agent: any): void {
+    const currentAgents = rootHolderToAgents.get(rootHolder);
+    if (currentAgents) {
+        currentAgents.push(agent);
     } else {
-        rawObjectInfo.agents = agents;
+        const targetAgents = [agent];
+        rootHolderToAgents.set(rootHolder, targetAgents);
+
+        if (isDebugMode()) attachDebugInfoToObject(rootHolder, VdsKeys.Agents, targetAgents);
     }
 }
 
-export function getAgents(rawObj: any): Set<any> {
-    const allAgents = new Set<any>();
-    const rawObjectInfo = rawToRawObjectInfo.get(rawObj);
-    let currentHolder = rawObjectInfo.rootHolder;
-    for (const positionItem of rawObjectInfo.position) {
-        currentHolder = currentHolder[positionItem];
-        const currentRawObjectInfo = rawToRawObjectInfo.get(currentHolder);
-        if (currentRawObjectInfo && currentRawObjectInfo.agents) {
-            for (const currentAgent of currentRawObjectInfo.agents) {
-                allAgents.add(currentAgent);
-            }
-        }
-    }
-    return allAgents;
+export function getAgents(rootHolder: any): any[] {
+    return rootHolderToAgents.get(rootHolder);
 }

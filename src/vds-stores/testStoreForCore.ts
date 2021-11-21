@@ -1,16 +1,27 @@
+import { testOtherStore1ForCore, testOtherStore2ForCore } from './stores';
 import { Hold } from '@/vds/core/hold';
 import { rw, Rw } from '@/vds/core/rw';
+import { Vds } from '@/vds/vds';
 
-export class TestParentStoreForCore {}
-
-export class TestStoreForCore extends TestParentStoreForCore {
-    // =======================shallow object============================
+export class TestParentStoreForCore {
     @Hold()
     shallowAnimals = {
         dog: 'Dog',
         cat: 'Cat',
         pigs: ['Pig1', 'Pig2', 'Pig3']
     };
+}
+
+export class TestOtherStoreForCore {
+    @Hold()
+    zoo = {
+        bear: { bear1: 'Bear1', bear2: 'Bear2' },
+        panda: ['Panda1', 'Panda2', 'Panda3']
+    };
+}
+
+export class TestStoreForCore extends TestParentStoreForCore {
+    // =======================shallow object============================
 
     @Rw()
     setShallowDog(): void {
@@ -170,5 +181,30 @@ export class TestStoreForCore extends TestParentStoreForCore {
     @Rw()
     toggleTiger2(): void {
         this.dynamicDeepAnimalsArray = this.dynamicDeepAnimals2;
+    }
+
+    // ========================代理===========================
+
+    get zoo1() {
+        return testOtherStore1ForCore.zoo;
+    }
+
+    get zoo2() {
+        return testOtherStore2ForCore.zoo;
+    }
+
+    constructor() {
+        super();
+        Vds.asAgent(this, testOtherStore1ForCore);
+    }
+
+    @Rw()
+    changeZoo1(): void {
+        this.zoo1.bear.bear1 = 'Bear1!!!!';
+    }
+
+    @Rw()
+    changeZoo2(): void {
+        this.zoo2.bear.bear1 = 'Bear1!!!!';
     }
 }

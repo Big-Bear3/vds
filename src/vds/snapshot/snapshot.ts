@@ -1,8 +1,7 @@
-import { rw } from '@/vds/core/rw';
 import { VdsKeys } from './../core/constants';
 import { cloneDeep } from 'lodash';
 import { getRawObjectInfo } from '../core/mapping';
-import { attachDebugInfoToObject, cloneDeepViaLodashClone, isCollectionObject, isDebugMode } from '../core/utils';
+import { attachDebugInfoToObject, cloneDeepForSnapshot, isDebugMode } from '../core/utils';
 import { reactive, toRaw } from '@vue/reactivity';
 
 interface RootSnapshotAttachedInfo {
@@ -46,15 +45,14 @@ export function Snapshot(): MethodDecorator {
     };
 }
 
-export function handleSnapshotFn(originFn: (...args: any[]) => any, originFnArgs: any[], snapshotRootHolder: any): any {
+function handleSnapshotFn(originFn: (...args: any[]) => any, originFnArgs: any[], snapshotRootHolder: any): any {
     const reactiveSensitiveSnapshot = originFn.call(snapshotRootHolder, ...originFnArgs);
-    const sensitiveSnapshotType = typeof reactiveSensitiveSnapshot;
-    if (sensitiveSnapshotType !== 'object' || sensitiveSnapshotType === null) {
-        console.error('快照必须是对象类型！');
+    if (typeof reactiveSensitiveSnapshot !== 'object' || reactiveSensitiveSnapshot === null) {
+        console.error('快照必须是非空的Object类型！');
         return undefined;
     }
 
-    const rawRootSnapshot = cloneDeepViaLodashClone(reactiveSensitiveSnapshot, (sensitiveObj, rawSnapshot) => {
+    const rawRootSnapshot = cloneDeepForSnapshot(reactiveSensitiveSnapshot, (sensitiveObj, rawSnapshot) => {
         const rawObjectInfo = getRawObjectInfo(toRaw(sensitiveObj));
         if (!rawObjectInfo) return;
 
@@ -83,66 +81,4 @@ export function getSnapshotInfo(rawSnapshot: any): SnapshotInfo {
 
 export function getRootSnapshotAttachedInfo(rawRootSnapshot: any): RootSnapshotAttachedInfo {
     return rawRootSnapshotToRootSnapshotAttachedInfo.get(rawRootSnapshot);
-}
-
-export function commitSnapshot(reactiveRootSnapshot: any): void {
-    const rawRootSnapshot = toRaw(reactiveRootSnapshot);
-    const rootSnapshotAttachedInfo = getRootSnapshotAttachedInfo(rawRootSnapshot);
-    if (!rootSnapshotAttachedInfo) {
-        console.error('提交的对象不是一个有效的快照！', rawRootSnapshot);
-        return;
-    }
-    commitSnapshotItem(rawRootSnapshot, rootSnapshotAttachedInfo.snapshotRootHolder);
-}
-
-function commitSnapshotItem(rawSnapshot: any, snapshotRootHolder: any): void {
-    const snapshotIsObject = typeof rawSnapshot === 'object';
-    const currentSnapshotPosition = getSnapshotInfo(rawSnapshot)?.position;
-    if (snapshotIsObject && currentSnapshotPosition) {
-        rw(snapshotRootHolder, () => {
-            settleSnapshotItem(rawSnapshot, currentSnapshotPosition, snapshotRootHolder);
-        });
-        return;
-    }
-    if (Array.isArray(rawSnapshot)) {
-        for (let i = 0; i < rawSnapshot.length; i++) {
-            commitSnapshotItem(rawSnapshot[i], snapshotRootHolder);
-        }
-    } else if (snapshotIsObject) {
-        for (const key of Object.keys(rawSnapshot)) {
-            commitSnapshotItem(rawSnapshot[key], snapshotRootHolder);
-        }
-    }
-}
-
-function settleSnapshotItem(rawSnapshot: any, snapshotPosition: (string | symbol | number)[], snapshotRootHolder: any): void {
-    let targetReactiveObj = snapshotRootHolder;
-    let previousReactiveObj: any;
-    for (let i = 0; i < snapshotPosition.length; i++) {
-        previousReactiveObj = targetReactiveObj;
-        targetReactiveObj = targetReactiveObj[snapshotPosition[i]];
-        if (!targetReactiveObj) {
-            console.warn(
-                '快照要回传的位置节点丢失，已跳过该节点！位置节点对象',
-                cloneDeep(previousReactiveObj),
-                '，key：',
-                snapshotPosition[i].toString()
-            );
-            return;
-        }
-    }
-
-    const rawSnapshotCopy = cloneDeep(rawSnapshot);
-    if (Array.isArray(targetReactiveObj) && Array.isArray(rawSnapshot)) {
-        targetReactiveObj.splice(0, targetReactiveObj.length, ...rawSnapshotCopy);
-    } else if (!isCollectionObject(rawSnapshot) && !isCollectionObject(rawSnapshot)) {
-        for (const targetReactiveObjKey of Object.keys(targetReactiveObj)) {
-            delete targetReactiveObj[targetReactiveObjKey];
-        }
-        for (const rawSnapshotCopyKey of Object.keys(rawSnapshotCopy)) {
-            targetReactiveObj[rawSnapshotCopyKey] = rawSnapshotCopy[rawSnapshotCopyKey];
-        }
-    } else {
-        previousReactiveObj[snapshotPosition[snapshotPosition.length - 1]] = rawSnapshotCopy;
-    }
 }

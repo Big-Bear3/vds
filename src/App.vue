@@ -1,7 +1,7 @@
 <template>
     <div id="nav">
-        <router-link to="/">VdsCore</router-link>|
-        <router-link to="/vds-snapshot">VdsSnapshot</router-link>
+        <router-link to="/">Vds Core</router-link>|
+        <router-link to="/vds-snapshot">Vds Snapshot</router-link>
     </div>
     <router-view />
 </template>

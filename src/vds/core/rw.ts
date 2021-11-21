@@ -8,10 +8,11 @@ interface RootHolderAttachedInfo {
 
 const rootHolderAttachedInfoMap = new WeakMap<any, RootHolderAttachedInfo>();
 
-export function isWritableState(holder: any, showError = true): boolean {
+let isUnlockingState = false;
+
+export function isWritableState(holder: any, key: string | symbol): boolean {
     let rootHolder: any;
-    const holderIsRootHolder = isRootHolder(holder);
-    if (holderIsRootHolder) {
+    if (isRootHolder(holder)) {
         rootHolder = holder;
     } else {
         rootHolder = getRootHolder(holder);
@@ -20,16 +21,29 @@ export function isWritableState(holder: any, showError = true): boolean {
     const rootHolderWritable = rootHolderAttachedInfoMap.get(rootHolder).writable;
 
     if (!rootHolderWritable) {
-        if (!holderIsRootHolder) {
-            const agents = getAgents(holder);
+        const agents = getAgents(rootHolder);
+        if (agents) {
             for (const agent of agents) {
                 const agentWritable = rootHolderAttachedInfoMap.get(agent)?.writable;
                 if (agentWritable) return true;
             }
         }
-        if (showError) {
-            console.error('禁止在没有被Rw()装饰器装饰的函数内，或非rw()函数内修改Hold()装饰器装饰的对象！');
+        if (isUnlockingState) {
+            console.error(
+                '当前方法无修改目标对象权限，请确认此方法是否与要修改的对象在同一实例内，或是否为当前实例注册了目标对象所在实例的代理！\n尝试修改的对象：',
+                holder,
+                '\n尝试修改属性或索引：',
+                key
+            );
+        } else {
+            console.error(
+                '禁止在没有被Rw()装饰器装饰的函数内，或非rw()函数内修改Hold()装饰器装饰的对象！\n尝试修改的对象：',
+                holder,
+                '\n尝试修改的属性或索引：',
+                key
+            );
         }
+
         return false;
     }
 
@@ -37,6 +51,8 @@ export function isWritableState(holder: any, showError = true): boolean {
 }
 
 export function lockWriteForRootHolder(rootHolder: any): void {
+    isUnlockingState = false;
+
     const rootHolderAttachedInfo = rootHolderAttachedInfoMap.get(rootHolder);
     if (rootHolderAttachedInfo) {
         rootHolderAttachedInfo.writable = false;
@@ -51,6 +67,8 @@ export function lockWriteForRootHolder(rootHolder: any): void {
 }
 
 export function unlockWriteForRootHolder(rootHolder: any): void {
+    isUnlockingState = true;
+
     const rootHolderAttachedInfo = rootHolderAttachedInfoMap.get(rootHolder);
     if (rootHolderAttachedInfo) {
         rootHolderAttachedInfo.writable = true;
@@ -68,10 +86,10 @@ export function isRootHolder(holder: any): boolean {
     return !!rootHolderAttachedInfoMap.get(holder);
 }
 
-export function rw(holder: any, rwAble: () => void): void {
-    unlockWriteForRootHolder(holder);
+export function rw(rootHolder: any, rwAble: () => void): void {
+    unlockWriteForRootHolder(rootHolder);
     rwAble();
-    lockWriteForRootHolder(holder);
+    lockWriteForRootHolder(rootHolder);
 }
 
 export function Rw(): MethodDecorator {

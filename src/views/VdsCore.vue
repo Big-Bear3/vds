@@ -94,18 +94,25 @@
         <br />
         <li>
             <span>dynamicTiger：</span>
-            <span>{{ testStoreForCoreReactive.dynamicDeepAnimals }}</span>
-            <button class="event-btn" @click="testStoreForCoreReactive.toggleTiger">Toggle Tiger</button>
+            <span>{{ testStoreForCore.dynamicDeepAnimals }}</span>
+            <button class="event-btn" @click="testStoreForCore.toggleTiger">Toggle Tiger</button>
         </li>
         <li>
             <span>dynamicAnimalsArray：</span>
-            <span>{{ testStoreForCoreReactive.dynamicDeepAnimalsArray }}</span>
-            <button class="event-btn" @click="testStoreForCoreReactive.toggleDeepAnimalsArray">Toggle Animals Array</button>
-            <button class="event-btn" @click="testStoreForCoreReactive.toggleTiger2">Toggle Tiger2</button>
+            <div>{{ testStoreForCore.dynamicDeepAnimalsArray }}</div>
+            <div>{{ testStoreForCoreReactive.dynamicDeepAnimalsArray }}</div>
+            <button class="event-btn" @click="testStoreForCore.toggleDeepAnimalsArray">Toggle Animals Array</button>
+            <button class="event-btn" @click="testStoreForCore.toggleTiger2">Toggle Tiger2 Log Error</button>
         </li>
+        <br />
+        <li>======================================代理=========================================</li>
+        <br />
         <li>
-            <span>dynamicRabit：</span>
-            <input v-model="testStoreForCoreReactive.dynamicDeepAnimalsArray[0].rabit" />
+            <span>zoo1：</span>
+            <div>{{ testStoreForCore.zoo1 }}</div>
+            <div>{{ testStoreForCore.zoo2 }}</div>
+            <button class="event-btn" @click="testStoreForCore.changeZoo1">Change Zoo1</button>
+            <button class="event-btn" @click="testStoreForCore.changeZoo2">Change Zoo2 Log Error</button>
         </li>
     </ul>
     <!-- <button @click="commit">提交</button> -->
@@ -115,7 +122,6 @@
 import { testStoreForCore } from '@/vds-stores/stores';
 import { computed, ref, reactive, watch, watchEffect } from 'vue';
 const testStoreForCoreReactive = reactive(testStoreForCore);
-
 const { shallowAnimals, shallowDucksArray, deepAnimals, firstDolphins, dynamicDeepAnimals } = testStoreForCore;
 const shallowPigs = shallowAnimals.pigs;
 

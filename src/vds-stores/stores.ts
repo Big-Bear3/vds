@@ -1,5 +1,7 @@
 import { TestStoreForSnapshot } from './testStoreForSnapshot';
-import { TestStoreForCore } from './testStoreForCore';
+import { TestOtherStoreForCore, TestStoreForCore } from './testStoreForCore';
 
+export const testOtherStore1ForCore = new TestOtherStoreForCore();
+export const testOtherStore2ForCore = new TestOtherStoreForCore();
 export const testStoreForCore = new TestStoreForCore();
 export const testStoreForSnapshot = new TestStoreForSnapshot();

@@ -14,7 +14,7 @@
             <input v-model="animalsSnapshot.pigs[index]" />
         </li>
         <li>
-            <button @click="commit">提交</button>
+            <button @click="commit">Submit</button>
         </li>
     </ul>
     <ul class="vds-snapshot-ul">
@@ -29,7 +29,7 @@
             <input v-model="animalsCombinationSnapshot.pigs2[index]" />
         </li>
         <li>
-            <button @click="commit2">提交</button>
+            <button @click="commit2">Submit</button>
         </li>
     </ul>
 </template>
@@ -46,6 +46,5 @@ const commit = (): void => {
 
 const commit2 = (): void => {
     Vds.commit(animalsCombinationSnapshot);
-    console.log(testStoreForSnapshot);
 };
 </script>

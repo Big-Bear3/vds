@@ -4,23 +4,23 @@ import { isCollectionObject, isVdsKey } from './utils';
 
 export const generalProxyHandler: ProxyHandler<any> = {
     defineProperty(target: any, key: string | symbol, attributes: PropertyDescriptor): boolean {
-        if (!isWritableState(target) && !isVdsKey(key)) return false;
+        if (!isWritableState(target, key) && !isVdsKey(key)) return true;
         return Reflect.defineProperty(target, key, attributes);
     },
 
     deleteProperty(target: any, key: string | symbol): boolean {
-        if (!isWritableState(target) && !isVdsKey(key)) return false;
+        if (!isWritableState(target, key) && !isVdsKey(key)) return true;
         return Reflect.deleteProperty(target, key);
     },
 
     set(target: any, key: string | symbol, value: any, receiver: any): boolean {
-        if (!isWritableState(target) && !isVdsKey(key)) return false;
+        if (!isWritableState(target, key) && !isVdsKey(key)) return true;
         return Reflect.set(target, key, value, receiver);
     },
 
-    setPrototypeOf(): boolean {
-        console.error('禁止设置Hold()装饰器装饰的对象的prototype！');
-        return false;
+    setPrototypeOf(target: any): boolean {
+        console.error('禁止设置Hold()装饰器装饰的对象的prototype！\n', target);
+        return true;
     },
 
     get(target: any, key: string | symbol, receiver: any): any {

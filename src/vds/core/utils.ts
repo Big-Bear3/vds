@@ -33,16 +33,13 @@ export function isVdsKey(key: string | symbol): boolean {
 
 const originalObjToClonedObj = new Map();
 
-export function cloneDeepViaLodashClone(
-    originalObj: any | any[],
-    substepCallback?: (originalObj: any, clonedObj: any) => void
-): any {
-    const clonedResult = baseClone(originalObj, substepCallback);
+export function cloneDeepForSnapshot(originalObj: any | any[], substepCallback?: (originalObj: any, clonedObj: any) => void): any {
+    const clonedResult = baseCloneForSnapshot(originalObj, substepCallback);
     originalObjToClonedObj.clear();
     return clonedResult;
 }
 
-function baseClone(originalObj: any | any[], substepCallback?: (originalObj: any, clonedObj: any) => void): any | any[] {
+function baseCloneForSnapshot(originalObj: any | any[], substepCallback?: (originalObj: any, clonedObj: any) => void): any | any[] {
     const originalObjType = typeof originalObj;
     if (originalObjType === 'object' && originalObjType !== null) {
         let clonedObj = originalObjToClonedObj.get(originalObj);
@@ -55,35 +52,51 @@ function baseClone(originalObj: any | any[], substepCallback?: (originalObj: any
 
         if (Array.isArray(clonedObj)) {
             for (let i = 0; i < clonedObj.length; i++) {
-                clonedObj[i] = baseClone(clonedObj[i], substepCallback);
+                clonedObj[i] = baseCloneForSnapshot(clonedObj[i], substepCallback);
             }
             return clonedObj;
         }
 
         if (clonedObj instanceof WeakMap) {
-            console.error('拷贝的元素不能是WeakMap类型！');
+            console.error('快照或快照中的元素不能是WeakMap类型！\n', clonedObj);
             return undefined;
         } else if (clonedObj instanceof WeakSet) {
-            console.error('拷贝的元素不能是WeakSet类型！');
+            console.error('快照或快照中的元素不能是WeakSet类型！\n', clonedObj);
             return undefined;
         } else if (clonedObj instanceof Map) {
             for (const [clonedObjKey, clonedObjValue] of clonedObj) {
-                clonedObj.set(clonedObjKey, baseClone(clonedObjValue, substepCallback));
+                clonedObj.set(clonedObjKey, baseCloneForSnapshot(clonedObjValue, substepCallback));
             }
         } else if (clonedObj instanceof Set) {
             const clonedObjArray = [...clonedObj];
             clonedObj.clear();
             for (const clonedObjArrayItem of clonedObjArray) {
-                clonedObj.add(baseClone(clonedObjArrayItem, substepCallback));
+                clonedObj.add(baseCloneForSnapshot(clonedObjArrayItem, substepCallback));
             }
         } else {
             const clonedObjKeys = Object.keys(originalObj);
             for (const clonedObjKey of clonedObjKeys) {
-                clonedObj[clonedObjKey] = baseClone(clonedObj[clonedObjKey], substepCallback);
+                clonedObj[clonedObjKey] = baseCloneForSnapshot(clonedObj[clonedObjKey], substepCallback);
             }
         }
 
         return clonedObj;
     }
     return originalObj;
+}
+
+export function tryToSetValueToContent(value: any, host: any): boolean {
+    if (Array.isArray(host) && Array.isArray(value)) {
+        host.splice(0, host.length, ...value);
+        return true;
+    } else if (!isCollectionObject(host) && !isCollectionObject(value) && !Array.isArray(host) && !Array.isArray(value)) {
+        for (const hostKey of Object.keys(host)) {
+            delete host[hostKey];
+        }
+        for (const rawSnapshotCopyKey of Object.keys(value)) {
+            host[rawSnapshotCopyKey] = value[rawSnapshotCopyKey];
+        }
+        return true;
+    }
+    return false;
 }

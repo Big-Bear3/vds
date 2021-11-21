@@ -42,10 +42,10 @@ export class TestStoreForSnapshot extends TestParentStoreForSnapshot {
 
     constructor() {
         super();
-        setTimeout(() => {
-            rw(this, () => {
-                delete this._animals.cat;
-            });
-        }, 1000);
+        // setTimeout(() => {
+        //     rw(this, () => {
+        //         delete this._animals.cat;
+        //     });
+        // }, 1000);
     }
 }
