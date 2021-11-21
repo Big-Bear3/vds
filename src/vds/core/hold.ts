@@ -1,4 +1,5 @@
 import { reactive } from 'vue';
+import { putReactiveAndSensitiveObjects } from './mapping';
 import { isWritableState, lockWriteForRootHolder as lockWriteForRootHolder } from './rw';
 import { createSensitiveObject } from './sense';
 import { isCollectionObject } from './utils';
@@ -32,6 +33,8 @@ export function Hold(): PropertyDecorator {
 
                 const sensitiveObject = createSensitiveObject(rootRawObj, this, key);
                 _rootObj = reactive(sensitiveObject);
+
+                putReactiveAndSensitiveObjects(_rootObj, sensitiveObject);
 
                 lockWriteForRootHolder(this);
             }

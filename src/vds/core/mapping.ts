@@ -2,7 +2,7 @@ import { VdsKeys } from './constants';
 import { isRootHolder } from './rw';
 import { attachDebugInfoToObject, isDebugMode } from './utils';
 
-interface RawObjectInfo {
+export interface RawObjectInfo {
     rootHolder: any;
     position: (string | symbol | number)[];
     agents?: Set<any>;
@@ -10,6 +10,7 @@ interface RawObjectInfo {
 
 const rawToSensitiveObjects = new WeakMap<any, any>();
 const sensitiveToRawObjects = new WeakMap<any, any>();
+const reactiveToSensitiveObjects = new WeakMap<any, any>();
 const rawToRawObjectInfo = new WeakMap<any, RawObjectInfo>();
 
 export function getSensitiveObject(rawObj: any): any {
@@ -23,6 +24,14 @@ export function getRawObject(sensitiveObj: any): any {
 export function putRawAndSensitiveObjects(rawObj: any, sensitiveObj: any): void {
     rawToSensitiveObjects.set(rawObj, sensitiveObj);
     sensitiveToRawObjects.set(sensitiveObj, rawObj);
+}
+
+export function putReactiveAndSensitiveObjects(reactiveObj: any, sensitiveObj: any): void {
+    reactiveToSensitiveObjects.set(reactiveObj, sensitiveObj);
+}
+
+export function getSensitiveObjectFromReactiveObject(reactiveObj: any): any {
+    return reactiveToSensitiveObjects.get(reactiveObj);
 }
 
 export function setRootHolderAndPosition(rawObj: any, rawObjHolder: any, rawObjKey: string | symbol) {
@@ -55,6 +64,16 @@ export function setRootHolderAndPosition(rawObj: any, rawObjHolder: any, rawObjK
 
         if (isDebugMode()) attachDebugInfoToObject(rawObj, VdsKeys.RawObjectInfo, targetRawObjectInfo);
     }
+}
+
+export function getRawObjectInfo(sensitiveOrReactiveObj: any): RawObjectInfo {
+    let rawObj = getRawObject(sensitiveOrReactiveObj);
+    if (!rawObj) {
+        const sensitiveObj = getSensitiveObjectFromReactiveObject(sensitiveOrReactiveObj);
+        if (!sensitiveObj) return undefined;
+        rawObj = getRawObject(sensitiveObj);
+    }
+    return rawToRawObjectInfo.get(rawObj);
 }
 
 export function getRootHolder(rawObj: any): any {
