@@ -1,6 +1,4 @@
-import { rw } from '@/vds/core/rw';
-import { Hold } from '@/vds/core/hold';
-import { Snapshot } from '@/vds/snapshot/snapshot';
+import { Hold, Snapshot } from '@/vds/vds';
 
 export class TestParentStoreForSnapshot {}
 

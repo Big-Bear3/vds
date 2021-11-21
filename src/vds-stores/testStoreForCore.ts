@@ -1,7 +1,5 @@
 import { testOtherStore1ForCore, testOtherStore2ForCore } from './stores';
-import { Hold } from '@/vds/core/hold';
-import { rw, Rw } from '@/vds/core/rw';
-import { Vds } from '@/vds/vds';
+import { Hold, Rw, rw, Vds } from '@/vds/vds';
 
 export class TestParentStoreForCore {
     @Hold()

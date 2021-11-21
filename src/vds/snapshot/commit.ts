@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash';
 import { toRaw } from 'vue';
-import { rw } from '../core/rw';
 import { tryToSetValueToContent } from '../core/utils';
+import { rw } from '../vds';
 import { getRootSnapshotAttachedInfo, getSnapshotInfo } from './snapshot';
 
 export function commitSnapshot(reactiveRootSnapshot: any): void {

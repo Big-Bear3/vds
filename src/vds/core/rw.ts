@@ -85,24 +85,3 @@ export function unlockWriteForRootHolder(rootHolder: any): void {
 export function isRootHolder(holder: any): boolean {
     return !!rootHolderAttachedInfoMap.get(holder);
 }
-
-export function rw(rootHolder: any, rwAble: () => void): void {
-    unlockWriteForRootHolder(rootHolder);
-    rwAble();
-    lockWriteForRootHolder(rootHolder);
-}
-
-export function Rw(): MethodDecorator {
-    return function (_target: any, _key: string | any, descriptor: PropertyDescriptor) {
-        const originFun = descriptor.value;
-        descriptor.value = function (...args: any[]) {
-            unlockWriteForRootHolder(this);
-            if (args === undefined) {
-                originFun.call(this);
-            } else {
-                originFun.call(this, ...args);
-            }
-            lockWriteForRootHolder(this);
-        };
-    };
-}
